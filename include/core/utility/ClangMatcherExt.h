@@ -112,6 +112,18 @@ AST_MATCHER_P(MaterializeTemporaryExpr, hasTemporary, internal::Matcher<Expr>, I
   return InnerMatcher.matches(*Node.GetTemporaryExpr(), Finder, Builder);
 }
 
+
+AST_MATCHER_P(NamedDecl, hasNameIn, std::vector<std::string>, names) {
+  return std::find(names.begin(), names.end(), Node.getNameAsString()) != names.end();
+}
+
+AST_POLYMORPHIC_MATCHER(isAssignmentOperator,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(BinaryOperator,
+                                                        CXXOperatorCallExpr)) {
+  return Node.isAssignmentOp();
+}
+
+
 AST_MATCHER(NestedNameSpecifier, isGlobalNamespace) {
   return Node.getKind() == NestedNameSpecifier::SpecifierKind::Global;
 }

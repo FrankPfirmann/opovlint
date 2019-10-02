@@ -10,4 +10,7 @@
     	"case" : false
     }
   },
+  "Printf" : {
+    "functions" : ["printf", "fprintf", "sprintf", "snprintf"]
+  }
 }

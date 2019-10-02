@@ -60,6 +60,16 @@ inline std::string typeOf(T&& node) {
   return "";
 }
 
+template <typename T>
+inline std::string substTypeOf(T&& node) {
+  clang::QualType type = node->getType();
+  const clang::SubstTemplateTypeParmType* substType = type->getAs<clang::SubstTemplateTypeParmType>();
+  if (!type.isNull() && substType != nullptr) {
+    return substType->getReplacedParameter()->getIdentifier()->getName();
+  }
+  return "";
+}
+
 inline std::string nameOf(const clang::NamedDecl* decl) {
   return decl->getNameAsString();
 }
@@ -216,10 +226,11 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
   bool subtree_has_type;
   std::string type;
   bool is_builtin;
+  std::string id;
 
  public:
-  explicit TypeDeducer(const std::string& type)
-      : subtree_has_type(false), type(type), is_builtin(is_builtin_type(type)) {
+  explicit TypeDeducer(const std::string& type, std::string id = "")
+      : subtree_has_type(false), type(type), is_builtin(is_builtin_type(type)), id(id) {
   }
 
   template <typename NODE>
@@ -231,15 +242,17 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
   }
 
   bool TraverseStmt(clang::Stmt* S) {
+    if(S == nullptr) {
+      return true;
+    }
     clang::Expr* expr = clang::dyn_cast<clang::Expr>(S);
     if (expr != nullptr) {
-      subtree_has_type = type_found(expr);
+      subtree_has_type = subtree_has_type || type_found(expr);
       const bool terminate_recursion = terminate(expr);
       if (subtree_has_type || terminate_recursion) {
-        return false;
+        return true;
       }
     }
-
     return RecursiveASTVisitor<TypeDeducer>::TraverseStmt(S);
   }
 
@@ -248,19 +261,23 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
     return type == "double" || type == "float";
   }
 
+
   inline bool type_found(clang::Expr* expr) {
     // we cont. if binary/parens returns double/float, happens even with typedef
     // types
     // TODO: possibly extend to unary ops too!
     // clang-format off
-    return typeOf(expr) == type
+    return (is_builtin || id == "") ? (typeOf(expr) == type
               && !(is_builtin
                     && (
                           clang::isa<clang::BinaryOperator>(expr)
                           || clang::isa<clang::ImplicitCastExpr>(expr)
                           || clang::isa<clang::ParenExpr>(expr)
                        )
-                  );
+                  )):
+           (
+             typeOf(expr) == type || substTypeOf(expr) == id
+             );
     // clang-format on
   }
 
@@ -280,6 +297,7 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
           && (
                 clang::isa<clang::ExplicitCastExpr>(expr)
                 || clang::isa<clang::CallExpr>(expr)
+                || clang::isa<clang::CXXConstructExpr>(expr)
              );
     // clang-format on
     return expr_returns_bool || type_is_swallowed;

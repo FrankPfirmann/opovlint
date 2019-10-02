@@ -67,36 +67,16 @@ void ImplicitConversion::setupMatcher() {
             )
       ).bind("impl_assign");*/
 
-  DeclarationMatcher impl_assign =
-      varDecl(
-          isDefinition()
-          , unless(isTypedef(type_s))
-          , hasInitializer(
-                ignoringImpCasts(
-                    ofType(type_s)
-                )
-            )
-      ).bind("impl_assign");
   // clang-format on
   this->addMatcher(impl_conversion);
-  // this->addMatcher(impl_assign);
 }
 
 void ImplicitConversion::run(const clang::ast_matchers::MatchFinder::MatchResult& result) {
   // const Expr* expr = result.Nodes.getNodeAs<Expr>("conversion") == nullptr ?
   // result.Nodes.getNodeAs<Expr>("impl_assign") : result.Nodes.getNodeAs<Expr>("conversion");
   auto& ihandle = context->getIssueHandler();
-  if (result.Nodes.getNodeAs<Expr>("conversion") == nullptr) {
-    const auto expr = result.Nodes.getNodeAs<VarDecl>("impl_assign");
-    auto type = clutil::typeOf(expr);
-    if (type.find(type_s) == std::string::npos) {
-      static const std::string module = moduleName() + "Asgn";
-      ihandle.addIssue(expr, module, moduleDescription());  //, message.str());
-    }
-  } else {
-    const Expr* expr = result.Nodes.getNodeAs<Expr>("conversion");
-    ihandle.addIssue(expr, moduleName(), moduleDescription());  //, message.str());
-  }
+  const Expr* expr = result.Nodes.getNodeAs<Expr>("conversion");
+  ihandle.addIssue(expr, moduleName(), moduleDescription());  //, message.str());
 
   if (transform) {
     auto& thandle = context->getTransformationHandler();

@@ -36,9 +36,10 @@ set(LSOURCES
   src/core/reporting/FormattedReporter.cpp
   src/core/reporting/ProgressMonitor.cpp
   src/core/transformation/TransformationHandler.cpp
-)
+  )
 
 set(PSOURCES
+
   src/AnalyzerFactory.cpp
   src/ModuleConsumer.cpp
   src/modules/ImplicitConditionMatcher.cpp
@@ -51,7 +52,9 @@ set(PSOURCES
   src/modules/GlobalScope.cpp
   src/modules/IfElseAssign.cpp
   src/modules/LocalScope.cpp
-)
+  src/modules/Printf.cpp
+  src/modules/Assign.cpp
+  )
 
 add_format_target(format-all
   "Formats OO-Lint source files"
