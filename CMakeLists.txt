@@ -36,7 +36,7 @@ set(LSOURCES
   src/core/reporting/FormattedReporter.cpp
   src/core/reporting/ProgressMonitor.cpp
   src/core/transformation/TransformationHandler.cpp
-  )
+  include/core/utility/ClangTemplateMatcher.h)
 
 set(PSOURCES
 

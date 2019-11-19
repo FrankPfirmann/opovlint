@@ -52,7 +52,7 @@ class FormattedReporter : public IssueReporter {
       const auto& tu_vec = i.tunit_occurences;
       if (!tu_vec.empty()) {
         std::copy(std::begin(tu_vec), std::end(tu_vec) - 1,
-                  std::ostream_iterator<decltype(i.tunit_occurences)::value_type>(out_ss, ","));
+                  std::ostream_iterator<decltype(i.tunit_occurences)::value_type>(out_ss, ";"));
         out_ss << *(std::end(tu_vec) - 1);
       }
       return out_ss.str();
