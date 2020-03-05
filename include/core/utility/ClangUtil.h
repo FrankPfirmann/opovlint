@@ -297,7 +297,8 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
           && (
                 clang::isa<clang::ExplicitCastExpr>(expr)
                 || clang::isa<clang::CallExpr>(expr)
-               // || clang::isa<clang::CXXConstructExpr>(expr)
+                || clang::isa<clang::CXXConstructExpr>(expr)
+                || clang::isa<clang::CXXNewExpr>(expr)
              );
     // clang-format on
     return expr_returns_bool || type_is_swallowed;
