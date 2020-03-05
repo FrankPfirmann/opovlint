@@ -31,7 +31,7 @@ void Assign::setupMatcher() {
   DeclarationMatcher impl_decl =
     varDecl(
       isDefinition()
-      , unless(anyOf(isTypedef(type_s), isTypedef(tolerated_type)))
+      , unless(isTypedef(type_s))
       , hasInitializer(
           ofType(type_s)
       )
@@ -42,8 +42,8 @@ void Assign::setupMatcher() {
     binaryOperator(
       allOf(
       isAssignmentOperator(),
-      unless(hasLHS(anyOf(ofType(tolerated_type), ofType(type_s)))),
-      hasRHS(ignoringImpCasts(ofType(type_s)))
+      unless(hasLHS(ofType(type_s))),
+      hasRHS(ofType(type_s))
       )
     ).bind("impl_assign");
   this->addMatcher(impl_decl);
