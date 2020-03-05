@@ -30,8 +30,10 @@ void Printf::setupMatcher() {
   // clang-format off
   StatementMatcher printf_matcher =
       callExpr(
-        callee(namedDecl(hasNameIn(functions_n))),
-        hasAnyArgument(ignoringParenImpCasts(ofType(type_s)))
+        callee(
+        functionDecl(
+        hasNameIn(functions_n)))
+        ,hasAnyArgument(ofType(type_s))
       ).bind("printf");
   // clang-format on
   this->addMatcher(printf_matcher);

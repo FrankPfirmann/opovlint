@@ -38,9 +38,9 @@ AST_POLYMORPHIC_MATCHER_P(isTypedefBase, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, D
 
 AST_POLYMORPHIC_MATCHER_P(isTypedefTemplate, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::string, type) {
   const auto typeOf_expr = Node.getType().getUnqualifiedType().getAsString();
-  QualType ty = Node.getType();
-  auto tys = ty->getAs<SubstTemplateTypeParmType>();
-  return (tys != nullptr || type == typeOf_expr);
+  auto ty = Node.getType().getUnqualifiedType();
+  auto tys = substTemplateTypeParmType();
+  return (tys.matches(*ty, Finder, Builder) || type == typeOf_expr);
 }
 
 AST_MATCHER(Stmt, notABinaryExpr) {
@@ -140,10 +140,11 @@ AST_MATCHER_P(CallExpr, callExprWithTemplateType, std::string, type_s) {
 
 
 AST_MATCHER_P(Stmt, ofType, std::string, type) {
+    /*
   StatementMatcher ce = callExpr(callExprWithTemplateType(type));
   if(ce.matches(Node, Finder, Builder)){
     return true;
-  }
+  }*/
   opov::clutil::TypeDeducer deducer(type);
   const bool is_type = deducer.hasType(const_cast<Stmt*>(&Node));
 
@@ -214,7 +215,7 @@ AST_MATCHER_P(MaterializeTemporaryExpr, hasTemporary, internal::Matcher<Expr>, I
 }
 
 
-AST_MATCHER_P(NamedDecl, hasNameIn, std::vector<std::string>, names) {
+AST_MATCHER_P(FunctionDecl, hasNameIn, std::vector<std::string>, names) {
   return std::find(names.begin(), names.end(), Node.getNameAsString()) != names.end();
 }
 

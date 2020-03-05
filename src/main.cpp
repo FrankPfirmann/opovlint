@@ -1,5 +1,4 @@
 #include "OpOvApp.h"
-
 #include <clang/Tooling/CommonOptionsParser.h>
 
 static llvm::cl::OptionCategory OpOvLintCategory("opov options");

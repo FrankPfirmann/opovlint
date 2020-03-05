@@ -32,23 +32,23 @@ void Assign::setupMatcher() {
 
 #define asgnDeclCore(mode)                                                                            \
   varDecl(                                                                                                  \
-    isDefinition()                                                                                          \
-    , unless(anyOf(isTypedef##mode(type_s), isTypedef##mode(tolerated_type), isDependentType()))\
-    , hasInitializer(                                                                                       \
-    allOf(ignoringImpCasts(ofType##mode(type_s)), isResolved())                                       \
-  )).bind("impl_decl")
+      isDefinition(),\
+      unless(anyOf(isTypedef##mode(type_s), isTypedef##mode(tolerated_type), isDependentType()))\
+    , hasInitializer(ofType##mode(type_s))                                 \
+  ).bind("impl_decl")
 
 #define asgnCore(mode)                                                                                    \
   binaryOperator(                                                                                               \
     isAssignmentOperator(),                                                                                     \
     hasLHS(unless(anyOf(ofType##mode(tolerated_type), ofType##mode(type_s), unless(isResolved())))),\
-    hasRHS(allOf(ignoringImpCasts(ofType##mode(type_s)), isResolved()))                                   \
+    hasRHS(ofType##mode(type_s))                                  \
   ).bind("impl_assign")
 
   auto decl_n = declMatcher(asgnDeclCore);
   auto decl_t = templateClassMatcher(asgnDeclCore);
   auto asgn_f1 = templateFunctionMatcher(asgnDeclCore);
   auto derived1 = derivedMatcher(asgnDeclCore);
+
   this->addMatcher(derived1);
   this->addMatcher(decl_n);
   this->addMatcher(decl_t);

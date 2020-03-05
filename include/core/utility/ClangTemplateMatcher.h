@@ -4,28 +4,26 @@
 
 #ifndef OPOV_CLANGTEMPLATEMATCHER_H
 #define OPOV_CLANGTEMPLATEMATCHER_H
-//TODO: Überschneidungen ignoriert, heuristical
 //TODO: no way to exclude all specializations. weird one way relation. clang not intended for this mode thing
-//TODO: macros together as one (so much redundancy ugh)
+//TODO: macros together as one (too much redundancy)
 //Difference in matching from decl to call
 
 #define declMatcher(inner)                              \
   decl(\
     inner(Base),\
     unless(hasAncestor(classTemplateSpecializationDecl())),\
-    unless(hasAncestor(functionTemplateDecl())),\
-    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s)))))))))\
-  )
+    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))
+
 
 #define stmtMatcher(inner)                              \
   stmt(\
     inner(Base),\
     unless(hasAncestor(classTemplateSpecializationDecl())),\
     unless(hasAncestor(functionTemplateDecl())),\
-    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s)))))))))\
-  )
+    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))
 
-#define applyToCtsd(inner, mode) hasUnqualifiedDesugaredType(\
+
+#define applyToCTSD(inner, mode) hasUnqualifiedDesugaredType(\
       recordType(\
         hasDeclaration(\
           classTemplateSpecializationDecl(\
@@ -41,14 +39,14 @@
     anyOf(\
       allOf(\
         hasAnyTemplateArgument(refersToType(asString(type_s)))\
-        , applyToCtsd(inner, Template)\
+        , applyToCTSD(inner, Template)\
       )\
       , allOf(\
         unless(hasAnyTemplateArgument(refersToType(asString(type_s))))\
-        , applyToCtsd(inner, Base)\
-        , hasUnqualifiedDesugaredType(recordType(hasDeclaration(cxxRecordDecl(unless(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))\
+        , applyToCTSD(inner, Base)\
       )\
     )\
+    , hasUnqualifiedDesugaredType(recordType(hasDeclaration(cxxRecordDecl(unless(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))\
   )
 
 #define applyToCallee(inner, mode) callee(functionDecl(forEachDescendant(inner(mode))))
@@ -70,7 +68,7 @@
 
 #define ofTypeDerived(type) \
   anyOf(\
-    ofType(type)\
+    ofTypeBase(type)\
     , hasDescendant(\
       implicitCastExpr(\
         hasCastKind(clang::CastKind::CK_UncheckedDerivedToBase)\

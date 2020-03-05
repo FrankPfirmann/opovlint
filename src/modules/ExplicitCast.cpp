@@ -48,6 +48,7 @@ void ExplicitCast::setupMatcher() {
 					anyOf(
 						hasDestinationType(hasCanonicalType(pointerType()))
 						, isTypedef(type_s)
+						, isDependentType()
 						, isConstructorConversion()
 					)
 				)
