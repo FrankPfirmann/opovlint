@@ -273,7 +273,7 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
                        )
                   )) :
            (
-             typeOf(expr) == type || (isSubstType(expr) && is_builtin_type(typeOf(expr))) //TODO: check if its the builtin reduced type
+             typeOf(expr) == type || (isSubstType(expr) && is_builtin_type(typeOf(expr)))
              );
     // clang-format on
   }
@@ -301,40 +301,6 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
     // clang-format on
     return expr_returns_bool || type_is_swallowed;
   }
-};
-
-class DependentChecker final : public clang::RecursiveASTVisitor<DependentChecker> {
-private:
-  bool is_dependent;
-
-public:
-  explicit DependentChecker()
-    : is_dependent(false) {
-  }
-
-  template<typename NODE>
-  bool hasType(NODE node) {
-    this->is_dependent = false;
-    this->TraverseStmt(node);
-
-    return is_dependent;
-  }
-
-  bool TraverseStmt(clang::Stmt *S) {
-    if (S == nullptr) {
-      return true;
-    }
-    clang::Expr *expr = clang::dyn_cast<clang::Expr>(S);
-    if (expr != nullptr) {
-      is_dependent = is_dependent || (!expr->getType().isNull() && expr->getType()->isDependentType());
-      if (is_dependent) {
-        return true;
-      }
-    }
-    return RecursiveASTVisitor<DependentChecker>::TraverseStmt(S);
-  }
-
-
 };
 } /* namespace clutil */
 } /* namespace opov */

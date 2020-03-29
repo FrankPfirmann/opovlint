@@ -29,19 +29,19 @@ void Assign::setupOnce(const Configuration *config) {
 
 void Assign::setupMatcher() {
 
-
-#define asgnDeclCore(mode)                                                                            \
-  varDecl(                                                                                                  \
-      isDefinition(),\
+// Example of inner matcher expressions as macros wit "##mode" to enable type checking mode switches of ClangTemplateMatcher
+#define asgnDeclCore(mode)                                                                      \
+  varDecl(                                                                                      \
+      isDefinition(),                                                                           \
       unless(anyOf(isTypedef##mode(type_s), isTypedef##mode(tolerated_type), isDependentType()))\
-    , hasInitializer(ofType##mode(type_s))                                 \
+    , hasInitializer(ofType##mode(type_s))                                                      \
   ).bind("impl_decl")
 
-#define asgnCore(mode)                                                                                    \
-  binaryOperator(                                                                                               \
-    isAssignmentOperator(),                                                                                     \
-    hasLHS(unless(anyOf(ofType##mode(tolerated_type), ofType##mode(type_s), unless(isResolved())))),\
-    hasRHS(ofType##mode(type_s))                                  \
+#define asgnCore(mode)                                                                              \
+  binaryOperator(                                                                                   \
+    isAssignmentOperator(),                                                                         \
+    hasLHS(unless(anyOf(ofType##mode(tolerated_type), ofType##mode(type_s), isDependentType()))),\
+    hasRHS(ofType##mode(type_s))                                                                    \
   ).bind("impl_assign")
 
   auto decl_n = declMatcher(asgnDeclCore);
@@ -84,7 +84,8 @@ std::string Assign::moduleName() {
 }
 
 std::string Assign::moduleDescription() {
-  return "Non-scalar types cannot be assigned to scalar types";
+  return "Active types cannot be assigned to variables of non-active type, since the user-defined types do not have\
+          conversion functions";
 }
 
 Assign::~Assign() = default;

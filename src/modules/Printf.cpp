@@ -30,10 +30,12 @@ void Printf::setupMatcher() {
   // clang-format off
   StatementMatcher printf_matcher =
       callExpr(
-        callee(
-        functionDecl(
-        hasNameIn(functions_n)))
-        ,hasAnyArgument(ofType(type_s))
+      callee(
+      functionDecl(
+      hasNameIn(functions_n)
+              )
+          )
+          ,hasAnyArgument(ofType(type_s))
       ).bind("printf");
   // clang-format on
   this->addMatcher(printf_matcher);
@@ -51,7 +53,7 @@ std::string Printf::moduleName() {
 }
 
 std::string Printf::moduleDescription() {
-  return "Certain functions (e.g. *printf) dont implicitly work with overloaded complex types";
+  return "User-defined types are not overload for specific library functions(e.g. printf)";
 }
 
 Printf::~Printf() = default;

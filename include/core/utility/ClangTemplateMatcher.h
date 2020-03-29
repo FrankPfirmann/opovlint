@@ -4,8 +4,6 @@
 
 #ifndef OPOV_CLANGTEMPLATEMATCHER_H
 #define OPOV_CLANGTEMPLATEMATCHER_H
-//TODO: no way to exclude all specializations. weird one way relation. clang not intended for this mode thing
-//TODO: macros together as one (too much redundancy)
 //Difference in matching from decl to call
 
 #define declMatcher(inner)                              \

@@ -90,12 +90,6 @@ AST_MATCHER_P(IfStmt, hasElseStmt, internal::Matcher<Stmt>, InnerMatcher) {
   return (Else != nullptr && InnerMatcher.matches(*Else, Finder, Builder));
 }
 
-AST_MATCHER(Stmt, isResolved){
-  opov::clutil::DependentChecker depChecker;
-  const bool is_dep = depChecker.hasType(const_cast<Stmt*>(&Node));
-  return !is_dep;
-  }
-
 AST_POLYMORPHIC_MATCHER(isDependentType, AST_POLYMORPHIC_SUPPORTED_TYPES(ValueDecl, Expr)){
     return Node.getType()->isDependentType();
   }
@@ -230,22 +224,6 @@ AST_MATCHER(NestedNameSpecifier, isGlobalNamespace) {
 }
 
 
-
-AST_MATCHER_P(TypedefDecl, hasScalarT, std::string, type) {
-  auto q = Node.getUnderlyingType();
-  TypeMatcher ttm = templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type))));
-  return (ttm.matches(q, Finder, Builder));
-}
-
-AST_MATCHER_P(ClassTemplateSpecializationDecl, location, std::string, word) {
-  auto& ct = Finder->getASTContext();
-  auto& sm = ct.getSourceManager();
-  auto s = Node.getPointOfInstantiation().printToString(sm);
-  if (s.find("OpenFOAM") != std::string::npos){
-    LOG_MSG(Node.getNameAsString());
-    LOG_MSG(s);
-  }
-}
 AST_MATCHER_P(DeclRefExpr, hasExplicitTemplateType, std::string, type) {
   auto temps = Node.template_arguments();
   for(auto t: temps){
@@ -256,36 +234,7 @@ AST_MATCHER_P(DeclRefExpr, hasExplicitTemplateType, std::string, type) {
   }
   return false;
 }
-AST_MATCHER(CallExpr, callIsDerived){
-  auto matcher = callExpr(anyOf(
-  has(implicitCastExpr(hasCastKind(clang::CastKind::CK_UncheckedDerivedToBase))),
-  has(memberExpr(has(implicitCastExpr(hasCastKind(clang::CastKind::CK_UncheckedDerivedToBase)))))
-  ));
-  return matcher.matches(Node, Finder, Builder);
-}
-AST_MATCHER_P(TypedefNameDecl, hasScalarBase, std::string, type){
-    LOG_MSG(Node.getNameAsString());
-  auto realtype = unravelTypedef(Node.getUnderlyingType());
-  LOG_MSG(realtype.getAsString());
-  auto temptype = templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type))));
-  auto binder = templateSpecializationType(hasUnqualifiedDesugaredType(recordType().bind("active_base")));
-  if(temptype.matches(*realtype, Finder, Builder)){
-    binder.matches(*realtype, Finder, Builder);
-    return true;
-  }
-}
-AST_MATCHER_P(Stmt, ofTypeD, std::string, type) {
-  StatementMatcher ce = callExpr(callExprWithTemplateType(type));
-  auto hasDerived = stmt(hasDescendant(implicitCastExpr(hasCastKind(clang::CastKind::CK_UncheckedDerivedToBase),
-  hasType(recordType(equalsBoundNode("active_base"))))));
-  if(ce.matches(Node, Finder, Builder) || hasDerived.matches(Node, Finder, Builder)){
-    return true;
-  }
-  opov::clutil::TypeDeducer deducer(type);
-  const bool is_type = deducer.hasType(const_cast<Stmt*>(&Node));
 
-  return is_type;
-}
 inline bool matchAllBases(CXXRecordDecl node, internal::BoundNodesTreeBuilder *whole, internal::Matcher<Type> inner, internal::ASTMatchFinder *finder) {
   bool matched = false;
   internal::BoundNodesTreeBuilder single;
@@ -304,16 +253,12 @@ inline bool matchAllBases(CXXRecordDecl node, internal::BoundNodesTreeBuilder *w
   return matched;
 }
 
-
 AST_MATCHER_P(CXXRecordDecl, forEachBase, internal::Matcher<Type>, InnerMatcher) {
   BoundNodesTreeBuilder whole;
   bool res = matchAllBases(Node, &whole, InnerMatcher, Finder);
   *Builder = std::move(whole);
   return res;
 }
-AST_MATCHER_P(Stmt, identity,internal::Matcher<Stmt>, InnerMatcher){
-    return InnerMatcher.matches(Node, Finder, Builder);
-  }
 } /* namespace ast_matchers */
 } /* namespace clang */
 
