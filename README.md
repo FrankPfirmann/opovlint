@@ -79,3 +79,5 @@ In the root folder of the project:
     cmake --build . --target executable
 
 The binary  should be created in the project folder *bin*. 
+
+Source transformation feature not yet combinable with multiple active types

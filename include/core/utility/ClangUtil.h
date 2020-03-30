@@ -221,12 +221,12 @@ inline clang::SourceLocation findSemiAfterLocation(clang::SourceLocation loc, cl
 class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
  private:
   bool subtree_has_type;
-  std::string type;
+  std::vector<std::string> type;
   bool is_builtin;
   bool is_template;
 
  public:
-  explicit TypeDeducer(const std::string& type, bool isTemplate = false)
+  explicit TypeDeducer(const std::vector<std::string>& type, bool isTemplate = false)
       : subtree_has_type(false), type(type), is_builtin(is_builtin_type(type)), is_template(isTemplate) {
   }
 
@@ -254,17 +254,19 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
   }
 
  private:
+  inline static bool is_builtin_type(const std::vector<std::string>& type) {
+    return type.size() == 1 && (type[0] == "double" || type[0] == "float");
+  }
   inline static bool is_builtin_type(const std::string& type) {
     return type == "double" || type == "float";
   }
-
 
   inline bool type_found(clang::Expr* expr) {
     // we cont. if binary/parens returns double/float, happens even with typedef
     // types
     // TODO: possibly extend to unary ops too!
     // clang-format off
-    return (is_builtin || !is_template) ? (typeOf(expr) == type
+    return (is_builtin || !is_template) ? (( std::find(type.begin(), type.end(), typeOf(expr)) != type.end())
                                            && !(is_builtin
                     && (
                           clang::isa<clang::BinaryOperator>(expr)
@@ -273,7 +275,8 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
                        )
                   )) :
            (
-             typeOf(expr) == type || (isSubstType(expr) && is_builtin_type(typeOf(expr)))
+           ( std::find(type.begin(), type.end(), typeOf(expr)) != type.end())
+           || (isSubstType(expr) && is_builtin_type(typeOf(expr)))
              );
     // clang-format on
   }
@@ -290,7 +293,7 @@ class TypeDeducer final : public clang::RecursiveASTVisitor<TypeDeducer> {
                 || clang::isa<clang::CallExpr>(expr)
              );
     const bool type_is_swallowed =
-        typeOfE != type
+      (std::find(type.begin(), type.end(), typeOfE) == type.end())
           && (
                 clang::isa<clang::ExplicitCastExpr>(expr)
                 || clang::isa<clang::CallExpr>(expr)

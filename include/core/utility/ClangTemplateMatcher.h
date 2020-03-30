@@ -10,7 +10,7 @@
   decl(\
     inner(Base),\
     unless(hasAncestor(classTemplateSpecializationDecl())),\
-    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))
+    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToAnyType(type_s)))))))))
 
 
 #define stmtMatcher(inner)                              \
@@ -18,7 +18,7 @@
     inner(Base),\
     unless(hasAncestor(classTemplateSpecializationDecl())),\
     unless(hasAncestor(functionTemplateDecl())),\
-    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))
+    unless(hasAncestor(cxxMethodDecl(ofClass(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToAnyType(type_s)))))))))
 
 
 #define applyToCTSD(inner, mode) hasUnqualifiedDesugaredType(\
@@ -36,15 +36,15 @@
   templateSpecializationType(\
     anyOf(\
       allOf(\
-        hasAnyTemplateArgument(refersToType(asString(type_s)))\
+        hasAnyTemplateArgument(refersToAnyType(type_s))\
         , applyToCTSD(inner, Template)\
       )\
       , allOf(\
-        unless(hasAnyTemplateArgument(refersToType(asString(type_s))))\
+        unless(hasAnyTemplateArgument(refersToAnyType(type_s)))\
         , applyToCTSD(inner, Base)\
       )\
     )\
-    , hasUnqualifiedDesugaredType(recordType(hasDeclaration(cxxRecordDecl(unless(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))))))))))\
+    , hasUnqualifiedDesugaredType(recordType(hasDeclaration(cxxRecordDecl(unless(forEachBase(templateSpecializationType(hasAnyTemplateArgument(refersToAnyType(type_s)))))))))\
   )
 
 #define applyToCallee(inner, mode) callee(functionDecl(forEachDescendant(inner(mode))))
@@ -91,7 +91,7 @@
     forEachBase(\
       templateSpecializationType(\
         allOf(\
-          hasAnyTemplateArgument(refersToType(asString(type_s)))\
+          hasAnyTemplateArgument(refersToAnyType(type_s))\
           , hasUnqualifiedDesugaredType(recordType(hasDeclaration(classTemplateSpecializationDecl().bind("active_base"))))\
         )\
     )))\

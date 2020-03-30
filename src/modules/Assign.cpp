@@ -24,7 +24,6 @@ Assign::Assign() {
 }
 
 void Assign::setupOnce(const Configuration *config) {
-  config->getValue("Assign:toleratedType", tolerated_type, "Foam::scalar");
 }
 
 void Assign::setupMatcher() {
@@ -33,14 +32,14 @@ void Assign::setupMatcher() {
 #define asgnDeclCore(mode)                                                                      \
   varDecl(                                                                                      \
       isDefinition(),                                                                           \
-      unless(anyOf(isTypedef##mode(type_s), isTypedef##mode(tolerated_type), isDependentType()))\
+      unless(anyOf(isTypedef##mode(type_s), isDependentType()))\
     , hasInitializer(ofType##mode(type_s))                                                      \
   ).bind("impl_decl")
 
 #define asgnCore(mode)                                                                              \
   binaryOperator(                                                                                   \
     isAssignmentOperator(),                                                                         \
-    hasLHS(unless(anyOf(ofType##mode(tolerated_type), ofType##mode(type_s), isDependentType()))),\
+    hasLHS(unless(anyOf(ofType##mode(type_s), isDependentType()))),\
     hasRHS(ofType##mode(type_s))                                                                    \
   ).bind("impl_assign")
 
@@ -70,9 +69,8 @@ void Assign::run(const clang::ast_matchers::MatchFinder::MatchResult &result) {
   if (result.Nodes.getNodeAs<Expr>("impl_assign") == nullptr) {
     const auto expr = result.Nodes.getNodeAs<VarDecl>("impl_decl");
     auto type = clutil::typeOf(expr);
-    if (type.find(type_s) == std::string::npos) {
-      static const std::string module = moduleName() + "Decl";
-      ihandle.addIssue(expr, module, moduleDescription());}  //, message.str());
+    static const std::string module = moduleName() + "Decl";
+    ihandle.addIssue(expr, module, moduleDescription());  //, message.str());
   } else {
     const Expr* expr = result.Nodes.getNodeAs<Expr>("impl_assign");
     ihandle.addIssue(expr, moduleName(), moduleDescription());  //, message.str());

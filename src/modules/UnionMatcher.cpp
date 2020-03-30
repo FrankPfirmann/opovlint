@@ -48,7 +48,7 @@ void UnionMatcher::run(const clang::ast_matchers::MatchFinder::MatchResult& resu
   const bool is_anon = inv_union->isAnonymousStructOrUnion();
   std::vector<FieldDecl*> fieldDecls(inv_union->field_begin(), inv_union->field_end());
   auto filter_end = std::remove_if(fieldDecls.begin(), fieldDecls.end(),
-                                   [&](const FieldDecl* decl) { return clutil::typeOf(decl) != type_s; });
+                                   [&](const FieldDecl* decl) { return std::find(type_s.begin(), type_s.end(), clutil::typeOf(decl)) == type_s.end();});
   fieldDecls.erase(filter_end, fieldDecls.end());
 
   std::stringstream message;

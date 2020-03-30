@@ -106,7 +106,8 @@ void ConditionalAssgnMatcher::setupMatcher() {
 void ConditionalAssgnMatcher::toString(clang::ASTContext& ac, const Expr* e, conditional_data& d) {
   auto cond = dyn_cast<ConditionalOperator>(e->IgnoreParenImpCasts());
   if (cond != nullptr) {
-    d.type = type_s;  // We matched, so it should be a scalar type. clutil::typeOf(e);
+    //TODO: which type was detected and should be transformed
+    d.type = type_s[0];  // We matched, so it should be a scalar type. clutil::typeOf(e);
     auto pos = clutil::posOf(ac.getSourceManager(), cond);
     d.variable = "_oolint_t_" + util::num2str(std::get<0>(pos)) + util::num2str(std::get<1>(pos)) +
                  util::num2str(std::get<2>(pos)) + util::num2str(std::get<3>(pos));

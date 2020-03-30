@@ -15,7 +15,7 @@ ASTMatcherModule::ASTMatcherModule() {
 }
 
 void ASTMatcherModule::init(const Configuration* config) {
-  config->getValue("global:type", type_s);
+  config->getVector("global:type", type_s);
   config->getValue("global:transform", transform, false);
   setupOnce(config);
   setupMatcher();

@@ -11,6 +11,7 @@
 #include "Module.h"
 
 #include <string>
+#include <vector>
 
 namespace opov {
 
@@ -20,7 +21,7 @@ class Configuration;
 class AbstractModule : public Module {
  protected:
   ModuleContext* context;
-  std::string type_s;
+  std::vector<std::string> type_s;
   bool transform;
 
  public:

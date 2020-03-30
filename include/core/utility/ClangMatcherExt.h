@@ -26,21 +26,21 @@ OPOV_CKIND(LValueToRValue)
 #undef OPOV_CKIND
 
 
-AST_POLYMORPHIC_MATCHER_P(isTypedef, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::string, type) {
+AST_POLYMORPHIC_MATCHER_P(isTypedef, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::vector<std::string>, type) {
   const auto typeOf_expr = Node.getType().getUnqualifiedType().getAsString();
-  return type == typeOf_expr;
+  return (std::find(type.begin(), type.end(), typeOf_expr) != type.end());
 }
 
-AST_POLYMORPHIC_MATCHER_P(isTypedefBase, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::string, type) {
+AST_POLYMORPHIC_MATCHER_P(isTypedefBase, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::vector<std::string>, type) {
   const auto typeOf_expr = Node.getType().getUnqualifiedType().getAsString();
-  return type == typeOf_expr;
+  return (std::find(type.begin(), type.end(), typeOf_expr) != type.end());
 }
 
-AST_POLYMORPHIC_MATCHER_P(isTypedefTemplate, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::string, type) {
+AST_POLYMORPHIC_MATCHER_P(isTypedefTemplate, AST_POLYMORPHIC_SUPPORTED_TYPES(Expr, Decl), std::vector<std::string>, type) {
   const auto typeOf_expr = Node.getType().getUnqualifiedType().getAsString();
   auto ty = Node.getType().getUnqualifiedType();
   auto tys = substTemplateTypeParmType();
-  return (tys.matches(*ty, Finder, Builder) || type == typeOf_expr);
+  return (tys.matches(*ty, Finder, Builder) || (std::find(type.begin(), type.end(), typeOf_expr) != type.end()));
 }
 
 AST_MATCHER(Stmt, notABinaryExpr) {
@@ -106,8 +106,17 @@ AST_MATCHER(TemplateArgument, isSubstTempArg){
     }
   }
 
+AST_MATCHER_P(TemplateArgument, refersToAnyType, std::vector<std::string>, type_s){
+  for(auto it = type_s.begin(); it != type_s.end(); ++it) {
+    auto refm = refersToType(asString(*it));
+    if(refm.matches(Node, Finder, Builder)){
+      return true;
+    }
+  }
+  return false;
 
-AST_MATCHER_P(CallExpr, callExprWithTemplateType, std::string, type_s) {
+  }
+AST_MATCHER_P(CallExpr, callExprWithTemplateType, std::vector<std::string>, type_s) {
   const clang::CXXMemberCallExpr *memcall = clang::dyn_cast<clang::CXXMemberCallExpr>(&Node);
   const clang::CXXOperatorCallExpr *opcall = clang::dyn_cast<clang::CXXOperatorCallExpr>(&Node);
   auto fdecl = Node.getDirectCallee();
@@ -117,7 +126,7 @@ AST_MATCHER_P(CallExpr, callExprWithTemplateType, std::string, type_s) {
   auto calltype = fdecl->getReturnType().getNonReferenceType();
   auto retm = substTemplateTypeParmType();
   auto tm =
-    templateSpecializationType(hasAnyTemplateArgument(refersToType(asString(type_s))));
+    templateSpecializationType(hasAnyTemplateArgument(refersToAnyType(type_s)));
   QualType calleeType;
   if(memcall != nullptr){
     calleeType = memcall->getImplicitObjectArgument()->IgnoreImpCasts()->getType();
@@ -126,26 +135,19 @@ AST_MATCHER_P(CallExpr, callExprWithTemplateType, std::string, type_s) {
   }else{
     return false;
   }
-  //auto& ct = Finder->getASTContext();
-  //LOG_MSG("ofType: " << " : "  << " Statement: " << opov::clutil::node2str(ct, &Node));
   return (tm.matches(*(unravelTypedef(calleeType)), Finder, Builder))
   && retm.matches(*calltype, Finder, Builder);
 }
 
 
-AST_MATCHER_P(Stmt, ofType, std::string, type) {
-    /*
-  StatementMatcher ce = callExpr(callExprWithTemplateType(type));
-  if(ce.matches(Node, Finder, Builder)){
-    return true;
-  }*/
+AST_MATCHER_P(Stmt, ofType, std::vector<std::string>, type) {
   opov::clutil::TypeDeducer deducer(type);
   const bool is_type = deducer.hasType(const_cast<Stmt*>(&Node));
 
   return is_type;
 }
 
-AST_MATCHER_P2_OVERLOAD(Stmt, ofType, std::string, type, bool, isTemplate, 1) {
+AST_MATCHER_P2_OVERLOAD(Stmt, ofType, std::vector<std::string>, type, bool, isTemplate, 1) {
   StatementMatcher ce = callExpr(callExprWithTemplateType(type));
   if(ce.matches(Node, Finder, Builder)){
     return true;
@@ -155,7 +157,7 @@ AST_MATCHER_P2_OVERLOAD(Stmt, ofType, std::string, type, bool, isTemplate, 1) {
   return is_type;
 }
 
-AST_MATCHER_P(Stmt, ofTypeBase, std::string, type){
+AST_MATCHER_P(Stmt, ofTypeBase, std::vector<std::string>, type){
   StatementMatcher ce = callExpr(callExprWithTemplateType(type));
   if(ce.matches(Node, Finder, Builder)){
     return true;
@@ -165,7 +167,7 @@ AST_MATCHER_P(Stmt, ofTypeBase, std::string, type){
   return is_type;
 }
 
-AST_MATCHER_P(Stmt, ofTypeTemplate, std::string, type){
+AST_MATCHER_P(Stmt, ofTypeTemplate, std::vector<std::string>, type){
   StatementMatcher ce = callExpr(callExprWithTemplateType(type));
   if(ce.matches(Node, Finder, Builder)){
     return true;
@@ -181,7 +183,7 @@ AST_MATCHER_P(CastExpr, hasSubExpr, internal::Matcher<Expr>, InnerMatcher) {
   return (SubExpression != nullptr && InnerMatcher.matches(*SubExpression, Finder, Builder));
 }
 
-AST_MATCHER_P(CXXConstructExpr, hasImplicitConversion, std::string, type) {
+AST_MATCHER_P(CXXConstructExpr, hasImplicitConversion, std::vector<std::string>, type) {
   const auto constr = Node.getConstructor();
   unsigned int ctor_pos = 0;
   const unsigned int num = Node.getNumArgs();
@@ -192,7 +194,7 @@ AST_MATCHER_P(CXXConstructExpr, hasImplicitConversion, std::string, type) {
       return ctor_param->hasDefaultArg();
     }
     Expr* arg_expr = const_cast<Expr*>(Node.getArg(ctor_pos)->IgnoreParenImpCasts());
-    if (opov::clutil::typeOf(ctor_param) == type && !deducer.hasType(arg_expr)) {
+    if ((std::find(type.begin(), type.end(), opov::clutil::typeOf(ctor_param)) != type.end()) && !deducer.hasType(arg_expr)) {
       return true;
     }
     ++ctor_pos;
@@ -224,11 +226,11 @@ AST_MATCHER(NestedNameSpecifier, isGlobalNamespace) {
 }
 
 
-AST_MATCHER_P(DeclRefExpr, hasExplicitTemplateType, std::string, type) {
+AST_MATCHER_P(DeclRefExpr, hasExplicitTemplateType, std::vector<std::string>, type) {
   auto temps = Node.template_arguments();
   for(auto t: temps){
     if (t.getArgument().getKind() == clang::TemplateArgument::ArgKind::Type
-    &&t.getArgument().getAsType().getAsString() == type){
+    &&(std::find(type.begin(), type.end(), t.getArgument().getAsType().getAsString()) != type.end())){
       return true;
     }
   }

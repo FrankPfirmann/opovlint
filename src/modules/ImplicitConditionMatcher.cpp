@@ -97,7 +97,8 @@ void ImplicitConditionMatcher::run(const clang::ast_matchers::MatchFinder::Match
 
   if (transform) {
     auto& thandle = context->getTransformationHandler();
-    thandle.addReplacements(trutil::addExplicitCompare(context->getASTContext(), invalid, type_s));
+    //TODO: which type was detected and should be transformed
+    thandle.addReplacements(trutil::addExplicitCompare(context->getASTContext(), invalid, type_s[0]));
   }
 }
 

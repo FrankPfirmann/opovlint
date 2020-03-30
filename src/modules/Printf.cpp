@@ -53,7 +53,7 @@ std::string Printf::moduleName() {
 }
 
 std::string Printf::moduleDescription() {
-  return "User-defined types are not overload for specific library functions(e.g. printf)";
+  return "User-defined types are not overloaded for specific library functions(e.g. printf)";
 }
 
 Printf::~Printf() = default;

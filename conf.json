@@ -2,11 +2,16 @@
   "global" : {
     "transform" : false,
     "filter" : true,
-    "type" : "scalar",
+    "progress": false,
+    "format": "%m@%f@%ls@%cs@%s@+%o@@",
+    "type" : ["Foam::scalar", "Foam::doubleScalar"],
     "modules" : {
-    	"filter" : ["ExplicitCast", "Union*", "Implicit*", "*Scope"],
-    	"case" : false
+      "filter" : ["Assign"],
+      "case" : false
     }
+  },
+  "Printf" : {
+    "functions" : ["printf", "fprintf", "sprintf", "snprintf", "modf", "fmod"]
   },
   "replacement" : {
     "location" : "opovlint/transform",
